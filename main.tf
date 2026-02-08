@@ -59,7 +59,7 @@ resource "aws_internet_gateway" "igw" {
 }
 
 #IG Route table
-resource "aws_route_table" "IGW_Route_table" {
+resource "aws_route_table" "igw_route_table" {
   vpc_id = aws_vpc.aws-networking-vpc.id
 
   route {
@@ -72,14 +72,14 @@ resource "aws_route_table" "IGW_Route_table" {
 }
 
 #Route table association
-resource "aws_route_table_association" "public_1" {
+resource "aws_route_table_association" "public_rt_1" {
   subnet_id      = aws_subnet.public-1.id
-  route_table_id = aws_route_table.IGW_Route_table.id
+  route_table_id = aws_route_table.igw_route_table.id
 }
 
-resource "aws_route_table_association" "public_2" {
+resource "aws_route_table_association" "public_rt_2" {
   subnet_id      = aws_subnet.public-2.id
-  route_table_id = aws_route_table.IGW_Route_table.id
+  route_table_id = aws_route_table.igw_route_table.id
 }
 
 #NAT Gateway for Private subnets
@@ -97,13 +97,51 @@ resource "aws_nat_gateway" "nat-2" {
   depends_on = [aws_internet_gateway.igw]
 }
 
-#Elastic IP
+#Elastic IP for Nat Gateways
 resource "aws_eip" "eip1" {
   domain   = "vpc"
 }
 
 resource "aws_eip" "eip2" {
   domain   = "vpc"
+}
+
+
+#Private Route table 1
+resource "aws_route_table" "private_route_table1" {
+  vpc_id = aws_vpc.aws-networking-vpc.id
+
+  route {
+    cidr_block = "10.0.1.0/24"
+    nat_gateway_id = aws_nat_gateway.nat-1.id
+  }
+  tags = {
+    Name = "Private Route-table 1"
+  }
+}
+
+#Private Route table 2
+resource "aws_route_table" "private_route_table2" {
+  vpc_id = aws_vpc.aws-networking-vpc.id
+
+  route {
+    cidr_block = "10.0.2.0/24"
+    nat_gateway_id = aws_nat_gateway.nat-2.id
+  }
+  tags = {
+    Name = "Private Route-table 2"
+  }
+}
+
+#Private Route table association
+resource "aws_route_table_association" "private_rt_1" {
+  subnet_id      = aws_subnet.private-1.id
+  route_table_id = aws_route_table.private_route_table1.id
+}
+
+resource "aws_route_table_association" "private_rt_2" {
+  subnet_id      = aws_subnet.private-2.id
+  route_table_id = aws_route_table.private_route_table2.id
 }
 
 
