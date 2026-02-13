@@ -106,7 +106,6 @@ resource "aws_eip" "eip2" {
   domain   = "vpc"
 }
 
-
 #Private Route table 1
 resource "aws_route_table" "private_route_table1" {
   vpc_id = aws_vpc.aws-networking-vpc.id
@@ -215,6 +214,46 @@ resource "aws_lb_listener" "front_end" {
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.alb-target-group.arn
+  }
+}
+
+# Get latest Amazon Linux 2 AMI
+data "aws_ami" "amazon_linux_2" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+  }
+}
+
+# Launch Template
+resource "aws_launch_template" "ec2_template" {
+  name_prefix   = "ec2-template-"
+  image_id      = data.aws_ami.amazon_linux_2.id
+  instance_type = "t3.micro"
+
+  vpc_security_group_ids = [
+    aws_security_group.app_sg.id
+  ]
+
+  user_data = base64encode(<<-EOF
+              #!/bin/bash
+              yum update -y
+              yum install -y nginx
+              systemctl start nginx
+              systemctl enable nginx
+              echo "Hello from Private EC2" > /usr/share/nginx/html/index.html
+              EOF
+  )
+
+  tag_specifications {
+    resource_type = "instance"
+
+    tags = {
+      Name = "app-instance"
+    }
   }
 }
 
