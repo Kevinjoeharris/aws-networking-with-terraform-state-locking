@@ -195,7 +195,7 @@ resource "aws_lb" "lb" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.allow_tls.id]
-  subnets            = []
+  subnets            = [  aws_subnet.public-1.id,aws_subnet.public-2.id]
 }
 
 #ALB Target Groups
