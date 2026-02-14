@@ -257,5 +257,19 @@ resource "aws_launch_template" "ec2_template" {
   }
 }
 
-
 #Auto-Scaling Groups
+resource "aws_autoscaling_group" "asg" {
+  name                      = "asg"
+  max_size                  = 4
+  min_size                  = 2
+  health_check_grace_period = 300
+  health_check_type         = "ELB"
+  desired_capacity          = 2
+  force_delete              = true
+  vpc_zone_identifier       = [aws_subnet.private-1.id, aws_subnet.private-2.id] 
+  target_group_arns         = [aws_lb_target_group.alb-target-group.arn]
+  launch_template {
+    id      = aws_launch_template.ec2_template.id
+    version = "$Latest"
+  }
+}
